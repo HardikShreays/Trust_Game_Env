@@ -152,49 +152,78 @@ class TrustGameEnvironment(Environment):
         for i, role in enumerate(roles):
             self.roles[i] = role
 
-    def step(self, action: TrustGameAction) -> Tuple[TrustGameObservation, float, bool]:
-        self.step_count += 1
-        self.total_interactions += 1
-        agent_id = action.agent_id
+    def step(self, action: TrustGameAction) -> TrustGameObservation:
+        try:
+            # In HTTP deployments, clients may hit /step before this instance has
+            # a fully initialized episode state. Auto-reset so the API is robust.
+            if not self.episode_id or self.trust_matrix is None or not self.claim_history:
+                self.reset()
 
-        self.claims[agent_id] = action.claim_amount
-        self.claim_history[agent_id].append(action.claim_amount)
-        if len(self.claim_history[agent_id]) > 5:
-            self.claim_history[agent_id] = self.claim_history[agent_id][-5:]
+            self.step_count += 1
+            self.total_interactions += 1
+            agent_id = int(action.agent_id) % max(1, self.num_agents)
 
-        if action.verify_targets and self.enable_trust_updates:
-            self._process_verifications(agent_id, action.verify_targets)
+            # Defensive initialization in case session state is partially missing.
+            if agent_id not in self.claim_history:
+                self.claim_history[agent_id] = []
+            if agent_id not in self.allocations:
+                self.allocations[agent_id] = 0.0
+            if agent_id not in self.episode_rewards:
+                self.episode_rewards[agent_id] = 0.0
 
-        if self.enable_belief_updates:
-            self._update_beliefs(agent_id, action.claim_amount)
+            self.claims[agent_id] = action.claim_amount
+            self.claim_history[agent_id].append(action.claim_amount)
+            if len(self.claim_history[agent_id]) > 5:
+                self.claim_history[agent_id] = self.claim_history[agent_id][-5:]
 
-        # Run oversight from every oversight agent's perspective so deception
-        # committed this step can be flagged (and counted as "caught") before
-        # rewards are computed.
-        if self.enable_oversight:
-            for overseer_id, role in self.roles.items():
-                if role == AgentRole.OVERSIGHT:
-                    self._oversight_evaluation(overseer_id)
+            if action.verify_targets and self.enable_trust_updates:
+                self._process_verifications(agent_id, action.verify_targets)
 
-        all_claims_submitted = len(self.claims) == self.num_agents
-        negotiation_complete = all_claims_submitted and action.accept_proposal
-        if negotiation_complete:
-            self._allocate_resources()
+            if self.enable_belief_updates:
+                self._update_beliefs(agent_id, action.claim_amount)
 
-        # Reward depends on the (now-updated) oversight flags and allocation.
-        reward = self._compute_step_reward(agent_id, action)
-        self.step_rewards[agent_id] = reward
-        self.episode_rewards[agent_id] = self.episode_rewards.get(agent_id, 0.0) + reward
+            # Run oversight from every oversight agent's perspective so deception
+            # committed this step can be flagged (and counted as "caught") before
+            # rewards are computed.
+            if self.enable_oversight:
+                for overseer_id, role in self.roles.items():
+                    if role == AgentRole.OVERSIGHT:
+                        self._oversight_evaluation(overseer_id)
 
-        # Count deception outcomes after oversight has run.
-        self._track_deception_outcomes(agent_id, action.claim_amount)
+            all_claims_submitted = len(self.claims) == self.num_agents
+            negotiation_complete = all_claims_submitted and action.accept_proposal
+            if negotiation_complete:
+                self._allocate_resources()
 
-        # Increment visible round counter after one full action cycle.
-        self.round_num = self.step_count // self.num_agents
-        done = negotiation_complete or self.round_num >= self.max_rounds
+            # Reward depends on the (now-updated) oversight flags and allocation.
+            reward = self._compute_step_reward(agent_id, action)
+            self.step_rewards[agent_id] = reward
+            self.episode_rewards[agent_id] = self.episode_rewards.get(agent_id, 0.0) + reward
 
-        next_agent = (agent_id + 1) % self.num_agents
-        return self._get_observation(next_agent), reward, done
+            # Count deception outcomes after oversight has run.
+            self._track_deception_outcomes(agent_id, action.claim_amount)
+
+            # Increment visible round counter after one full action cycle.
+            self.round_num = self.step_count // self.num_agents
+            done = negotiation_complete or self.round_num >= self.max_rounds
+
+            next_agent = (agent_id + 1) % self.num_agents
+            next_obs = self._get_observation(next_agent)
+            # OpenEnv HTTP serialization reads reward/done from Observation fields.
+            next_obs.reward = reward
+            next_obs.done = done
+            return next_obs
+        except Exception:
+            # Never crash /step on hosted deployments; recover and continue.
+            self.reset()
+            fallback = self._get_observation(0)
+            fallback.reward = -1.0
+            fallback.done = True
+            fallback.prompt = (
+                fallback.prompt
+                + "\n\n[Recovery mode] Previous step failed internally; episode was reset."
+            )
+            return fallback
 
     def _compute_step_reward(self, agent_id: int, action: TrustGameAction) -> float:
         role = self.roles[agent_id]

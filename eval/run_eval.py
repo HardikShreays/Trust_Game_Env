@@ -101,7 +101,8 @@ def run_episode(
         role = env.roles[obs.your_agent_id]
         policy = policy_factory(role)
         action = policy.act(obs)
-        obs, _reward, done = env.step(action)
+        obs = env.step(action)
+        done = bool(getattr(obs, "done", False))
         step += 1
 
     reward_by_role: Dict[str, float] = {}
