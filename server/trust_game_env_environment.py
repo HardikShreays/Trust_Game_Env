@@ -37,7 +37,7 @@ class TrustGameEnvironment(Environment):
 
     def __init__(
         self,
-        num_agents: int = 4,
+        num_agents: int = 5,
         max_rounds: int = 10,
         resource_pool: float = 100.0,
         curriculum_stage: int = 0,
