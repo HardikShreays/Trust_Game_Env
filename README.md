@@ -151,6 +151,7 @@ See `openenv.yaml` and `server/Dockerfile`.
 A Colab-friendly notebook is included at:
 
 - `training/train_trl_unsloth.ipynb`
+- Colab link: [Trust Game TRL + Unsloth training notebook](https://colab.research.google.com/drive/18fPoihsVVGsTzCNPPFZGL490O6XC2dTe?usp=sharing)
 
 What it does:
 
@@ -170,6 +171,7 @@ Suggested quick workflow:
 
 - Environment URL: [https://huggingface.co/spaces/hardikshreyas/trust_game_env](https://huggingface.co/spaces/hardikshreyas/trust_game_env)
 - Training notebook: `training/train_trl_unsloth.ipynb`
+- Training notebook (Colab): [https://colab.research.google.com/drive/18fPoihsVVGsTzCNPPFZGL490O6XC2dTe?usp=sharing](https://colab.research.google.com/drive/18fPoihsVVGsTzCNPPFZGL490O6XC2dTe?usp=sharing)
 - Evaluation summaries: `eval_results/results_summary.json`, `eval_results/results_raw.csv`
 
 Add any optional demo materials here before final submission:
