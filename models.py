@@ -91,6 +91,10 @@ class EpisodeState(State):
 
     total_rounds: int = Field(..., ge=1)
     curriculum_stage: int = Field(default=0, ge=0)
+    curriculum_task: Dict[str, Any] = Field(
+        default_factory=dict,
+        description="Judge-facing task metadata for the active curriculum stage",
+    )
     agents_config: Dict[int, AgentRole] = Field(default_factory=dict)
     system_metrics: Dict[str, float] = Field(
         default_factory=dict, description="Episode-level aggregate metrics"
