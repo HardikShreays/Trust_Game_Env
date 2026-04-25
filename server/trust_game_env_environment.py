@@ -71,7 +71,7 @@ class TrustGameEnvironment(Environment):
     def __init__(
         self,
         num_agents: int = 5,
-        max_rounds: int = 10,
+        max_rounds: int = 5,
         resource_pool: float = 100.0,
         curriculum_stage: int = 0,
         seed: int | None = None,
@@ -1001,6 +1001,15 @@ class TrustGameEnvironment(Environment):
 
         if self.claims:
             base_prompt += f"\nCurrent claims: {self.claims}\n"
+
+        all_claims_submitted = len(self.claims) == self.num_agents
+        rounds_left = max(0, self.max_rounds - self.round_num)
+        if all_claims_submitted:
+            base_prompt += (
+                "\nAll agents have submitted claims. Set accept_proposal=true "
+                "to finalize allocation, otherwise the proposal will auto-finalize "
+                f"in {rounds_left} round(s).\n"
+            )
         base_prompt += "\nWhat do you claim, and do you accept the current proposal?"
         return base_prompt
 

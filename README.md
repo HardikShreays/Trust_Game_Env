@@ -134,7 +134,7 @@ Plus shaping terms: truthfulness, trust calibration, belief alignment, second-or
 | 1     | 0           | 1               | 1      | auto               | 1         |
 | 2     | 1           | 2               | 1      | auto               | 1         |
 
-Configure via `TrustGameEnvironment(num_agents=..., max_rounds=..., curriculum_stage=..., seed=...)`.
+Configure via `TrustGameEnvironment(num_agents=..., max_rounds=..., curriculum_stage=..., seed=...)`. The default `max_rounds=5` is tuned so the timeout auto-allocation reliably finalises the episode within the client's step budget (`MAX_STEPS=32`), keeping fairness and per-agent allocation non-zero in evaluation.
 
 Judge-friendly task framing:
 
@@ -198,20 +198,14 @@ Suggested quick workflow:
 
 Recommended final-result framing:
 
-| Difficulty | Expected comparison |
-| ---------- | ------------------- |
-| Easy | Trained policy should beat random and heuristic on reward/fairness |
-| Medium | Trained policy should beat random and heuristic while keeping deception lower |
-| Hard | Trained policy should beat random and heuristic while improving detection/fairness |
+| Difficulty | Current comparison summary |
+| ---------- | -------------------------- |
+| Easy | Trained policy beats random and heuristic on total reward |
+| Medium | Trained policy beats random and heuristic on total reward |
+| Hard | Trained policy beats random and heuristic on total reward and lowers deception |
 
 Rewards can be negative because they are penalties plus sparse bonuses. Report relative improvement instead of only absolute score, for example: "trained reduces penalty by 55% vs random and 18-26% vs heuristic."
 
-Before spending more HF credits on final training:
-
-- Push the latest environment so timeout auto-allocation and curriculum task metadata are live.
-- Run a small dataset/eval smoke test.
-- Confirm `accept_proposal_true_rows` and `oversampled_oversight_rows` are nonzero in `dataset_summary.json`.
-- Confirm fairness and detection metrics move off zero before the final paid run.
 
 ## Submission Links
 
