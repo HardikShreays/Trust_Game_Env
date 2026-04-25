@@ -180,18 +180,41 @@ Add any optional demo materials here before final submission:
 - Mini-blog / HF post: `<add-link>`
 - Slides: `<add-link>`
 
+## Problem statement
+
+Most multi-agent benchmarks optimize behavior under shared information, but real deployments involve hidden incentives, strategic misreporting, and uneven visibility. My core problem is to model how deception emerges and spreads in a resource-allocation setting where some agents manipulate claims while others must infer who is deceptive from partial signals across repeated rounds.
+
+## How I solve it
+
+I solve this by building a role-driven Trust Game environment with asymmetric information, oversight, and longitudinal trust dynamics. Agents negotiate through claims, verification, and messages; the environment tracks trust shifts, belief updates, suspicion signals, and deception outcomes over time. I further strengthen realism with persistent agent memory, suspicion scoring, stricter deception-effectiveness checks, trust-network stability, information diffusion and betrayal-recognition metrics, plus message inconsistency tracking.
+
 ## Project structure
 
 ```
 trust_game_env/
-├── __init__.py              # Public API
-├── client.py                # TrustGameEnv WebSocket client
-├── models.py                # Action / Observation / State + AgentRole
-├── openenv.yaml             # OpenEnv manifest
-├── pyproject.toml           # Project metadata
+├── .gitignore
 ├── README.md
+├── __init__.py                         # Public API exports
+├── client.py                           # Python client for env API
+├── models.py                           # Action / Observation / State models
+├── openenv.yaml                        # OpenEnv deployment manifest
+├── pyproject.toml                      # Package/dependency metadata
+├── uv.lock                             # Locked dependency graph
+├── baselines/
+│   ├── __init__.py
+│   └── policies.py                     # Scripted role policies
+├── eval/
+│   └── ...                             # Evaluation utilities
+├── eval_results/
+│   ├── results_raw.csv
+│   └── results_summary.json
+├── training/
+│   ├── train_trl_unsloth.ipynb
+│   └── train_trl_unsloth_hf_space.ipynb
 └── server/
-    ├── app.py               # FastAPI wiring
-    ├── trust_game_env_environment.py  # Negotiation logic
-    └── Dockerfile
+    ├── Dockerfile
+    ├── __init__.py
+    ├── app.py                          # FastAPI wiring
+    ├── requirements.txt
+    └── trust_game_env_environment.py   # Core environment logic
 ```
