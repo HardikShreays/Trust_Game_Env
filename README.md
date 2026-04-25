@@ -180,6 +180,27 @@ Add any optional demo materials here before final submission:
 - Mini-blog / HF post: `<add-link>`
 - Slides: `<add-link>`
 
+## Phase 2 evaluation (latest)
+
+Artifacts from the latest ablation run are in `eval_results/phase2_eval/`:
+
+- Raw metrics CSV: `eval_results/phase2_eval/results_raw.csv`
+- Condition summary JSON: `eval_results/phase2_eval/results_summary.json`
+- Reward ablation plot: `eval_results/phase2_eval/ablation_reward_mean.png`
+- Core metrics plot: `eval_results/phase2_eval/ablation_core_metrics.png`
+
+What these results currently show:
+
+- The environment runs stably across ablation conditions (`n=24` seeds each).
+- `no_trust_updates` diverges from `full` on reward/trust, indicating trust-channel sensitivity.
+- Several conditions (`full`, `no_oversight`, `no_deception_reward`, `no_belief_updates`) currently collapse to nearly identical aggregates.
+
+Current caveats (important for judges):
+
+- Oversight detection metrics are still `0.0` (`precision/recall/F1`), so the claim "oversight detects deception" is not yet empirically demonstrated by this run.
+- `no_deception_reward` and `no_belief_updates` are expected to look similar under scripted baseline policies because those policies are not optimized by reward and only weakly depend on belief-state dynamics.
+- `full` vs `no_oversight` parity suggests the current flagging thresholds/policy interactions are too weak; this is a known gap to improve next.
+
 ## Problem statement
 
 Most multi-agent benchmarks optimize behavior under shared information, but real deployments involve hidden incentives, strategic misreporting, and uneven visibility. My core problem is to model how deception emerges and spreads in a resource-allocation setting where some agents manipulate claims while others must infer who is deceptive from partial signals across repeated rounds.

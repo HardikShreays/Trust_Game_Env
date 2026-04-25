@@ -13,12 +13,13 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import random
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Dict, List, Optional, Sequence
 
 from ..baselines.policies import Policy, policy_for_role
-from ..models import AgentRole, TrustGameObservation
+from ..models import AgentRole, TrustGameAction, TrustGameObservation
 from ..server.trust_game_env_environment import TrustGameEnvironment
 from .ablations import DEFAULT_GRID, GRID_BY_NAME, Condition
 from .metrics import aggregate, detection_metrics, summarise
@@ -40,6 +41,44 @@ SUMMARY_KEYS = (
     "total_successful_deceptions",
     "steps",
 )
+
+
+class RandomPolicy(Policy):
+    """Stochastic baseline to stress-test ablation sensitivity."""
+
+    name: str = "random"
+
+    def __init__(self, rng: random.Random):
+        self._rng = rng
+
+    def act(self, obs: TrustGameObservation) -> TrustGameAction:
+        other_ids = [i for i in obs.trust_scores.keys() if i != obs.your_agent_id]
+        self._rng.shuffle(other_ids)
+        verify_targets = other_ids[: self._rng.randint(0, min(2, len(other_ids)))]
+        communication_act = self._rng.choice(
+            ["reassure", "threaten", "guilt", "false_promise", "partial_confession"]
+        )
+        return TrustGameAction(
+            agent_id=obs.your_agent_id,
+            claim_amount=float(self._rng.uniform(0.0, 100.0)),
+            verify_targets=verify_targets,
+            accept_proposal=bool(self._rng.random() < 0.5),
+            communication_act=communication_act,
+            message="random-eval-policy",
+        )
+
+
+def _policy_factory_for_mode(mode: str, seed: int) -> PolicyFactory:
+    if mode == "scripted":
+        return policy_for_role
+    if mode == "random":
+        rng = random.Random(seed)
+
+        def _factory(_role: AgentRole) -> Policy:
+            return RandomPolicy(rng)
+
+        return _factory
+    raise ValueError(f"Unknown policy mode: {mode}")
 
 
 @dataclass
@@ -191,6 +230,12 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--curriculum-stage", type=int, default=2)
     parser.add_argument("--out-dir", type=Path, default=Path("eval_results"))
+    parser.add_argument(
+        "--policy-mode",
+        choices=["scripted", "random"],
+        default="scripted",
+        help="Policy source for evaluation rollouts",
+    )
     return parser.parse_args()
 
 
@@ -204,7 +249,13 @@ def main() -> None:
         conditions.append(GRID_BY_NAME[name])
 
     seeds = list(range(args.seed_start, args.seed_start + args.seeds))
-    results = run_grid(conditions, seeds, curriculum_stage=args.curriculum_stage)
+    policy_factory = _policy_factory_for_mode(args.policy_mode, seed=args.seed_start)
+    results = run_grid(
+        conditions,
+        seeds,
+        curriculum_stage=args.curriculum_stage,
+        policy_factory=policy_factory,
+    )
 
     raw_path = args.out_dir / "results_raw.csv"
     summary_path = args.out_dir / "results_summary.json"
@@ -213,6 +264,7 @@ def main() -> None:
 
     print(f"Wrote {len(results)} episodes to {raw_path}")
     print(f"Wrote summary to {summary_path}")
+    print(f"Policy mode: {args.policy_mode}")
     for name, payload in summary.items():
         reward = payload["metrics"]["episode_reward_mean"]
         f1 = payload["metrics"]["detection_f1"]
