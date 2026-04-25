@@ -187,14 +187,14 @@ What it does:
 - Adds explicit `accept_proposal=true` completion examples after all claims are submitted
 - Fine-tunes a compact instruct model with **Unsloth** + **TRL SFTTrainer**
 - Evaluates random, heuristic, and trained policies across Easy/Medium/Hard curriculum tasks
-- Saves curriculum reward plots to `eval_results/advanced_training/`
+- Saves curriculum reward plots to `eval_results/` (for example `advanced_reward_by_curriculum.png` and `advanced_mean_reward_by_curriculum.png`)
 
 Suggested quick workflow:
 
 1. Open `training/train_trl_unsloth.ipynb` in Colab or Jupyter
 2. Run all cells to train and evaluate
-3. Commit generated artifacts (`eval_results/*.png`, optional metrics CSV/JSON)
-4. Link results directly in this README
+3. Commit generated artifacts (`eval_results/*.png`, plus metrics CSV/JSON)
+4. Embed key plots in this README with one-line captions
 
 Recommended final-result framing:
 
@@ -213,12 +213,31 @@ Rewards can be negative because they are penalties plus sparse bonuses. Report r
 - Training notebook: `training/train_trl_unsloth.ipynb`
 - Training notebook (Colab): [https://colab.research.google.com/drive/18fPoihsVVGsTzCNPPFZGL490O6XC2dTe?usp=sharing](https://colab.research.google.com/drive/18fPoihsVVGsTzCNPPFZGL490O6XC2dTe?usp=sharing)
 - Evaluation summaries: `eval_results/results_summary.json`, `eval_results/results_raw.csv`
+- Curriculum plots: `eval_results/advanced_reward_by_curriculum.png`, `eval_results/advanced_mean_reward_by_curriculum.png`
 
-Add any optional demo materials here before final submission:
+## Submission checklist (judge-facing)
 
-- Video (<2 min): `<add-youtube-link>`
-- Mini-blog / HF post: `<add-link>`
-- Slides: `<add-link>`
+- [x] OpenEnv environment implemented and validated (`openenv validate`)
+- [x] Environment deployed on HF Space: [hardikshreyas/trust_game_env](https://huggingface.co/spaces/hardikshreyas/trust_game_env)
+- [x] TRL + Unsloth training notebook included and Colab-linked
+- [x] Real training/eval artifacts committed (`eval_results/*.png`, `eval_results/*.json`, `eval_results/*.csv`)
+- [ ] Add one external writeup link in README (choose one):
+  - [ ] YouTube video (<2 min): `<add-youtube-link>`
+  - [ ] HF mini-blog / post: `<add-link>`
+  - [ ] Slide deck: `<add-link>`
+- [x] README includes problem framing, env design, and quantitative results
+
+Submission note: do not upload large video files to the repo/HF env. Keep videos external and link by URL in this README.
+
+## Key plots
+
+![Curriculum reward by episode](eval_results/advanced_reward_by_curriculum.png)
+
+Caption: Episode-level rewards for random, heuristic, and trained policies across Easy/Medium/Hard curriculum tasks.
+
+![Mean reward by curriculum difficulty](eval_results/advanced_mean_reward_by_curriculum.png)
+
+Caption: Mean reward comparison per policy and difficulty; trained policy should dominate random/heuristic if learning succeeds.
 
 ## Phase 2 evaluation (latest)
 
