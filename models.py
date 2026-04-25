@@ -43,6 +43,13 @@ class NegotiationAction(Action):
         default_factory=list, description="Agent IDs to verify"
     )
     accept_proposal: bool = Field(False, description="Accept current resource split")
+    communication_act: Optional[str] = Field(
+        None,
+        description=(
+            "Optional social move label: reassure, threaten, guilt, "
+            "false_promise, partial_confession"
+        ),
+    )
     message: Optional[str] = Field(None, description="Optional justification message")
 
 

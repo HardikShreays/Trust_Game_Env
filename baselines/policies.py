@@ -53,6 +53,7 @@ class HonestPolicy(Policy):
             claim_amount=claim,
             verify_targets=verify_targets,
             accept_proposal=accept,
+            communication_act="reassure",
             message="claiming true need",
         )
 
@@ -70,6 +71,7 @@ class SelfInterestedPolicy(Policy):
             claim_amount=claim,
             verify_targets=[],
             accept_proposal=True,
+            communication_act="false_promise",
             message="prioritising my share",
         )
 
@@ -89,6 +91,7 @@ class AdversarialPolicy(Policy):
             claim_amount=claim,
             verify_targets=[],
             accept_proposal=accept,
+            communication_act="guilt",
             message="we all deserve our share",
         )
 
@@ -111,6 +114,7 @@ class VictimPolicy(Policy):
             claim_amount=claim,
             verify_targets=verify_targets,
             accept_proposal=True,
+            communication_act="reassure",
             message="trusting you",
         )
 
@@ -131,6 +135,7 @@ class OversightPolicy(Policy):
             claim_amount=claim,
             verify_targets=verify_targets,
             accept_proposal=accept,
+            communication_act="partial_confession",
             message="monitoring for deception",
         )
 
