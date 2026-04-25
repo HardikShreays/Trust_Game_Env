@@ -115,6 +115,7 @@ class TrustGameEnvironment(Environment):
         self.trust_streaks: Dict[int, int] = {}
         self.repeated_liar_counts: Dict[int, int] = {}
         self.trust_denials: Dict[int, int] = {}
+        self.correct_verifications: Dict[int, int] = {}
         self.social_penalty_events: int = 0
         self.total_blackmail_attempts: int = 0
 
@@ -170,6 +171,7 @@ class TrustGameEnvironment(Environment):
         self.trust_streaks = {}
         self.repeated_liar_counts = {}
         self.trust_denials = {}
+        self.correct_verifications = {}
         self.social_penalty_events = 0
         self.total_blackmail_attempts = 0
 
@@ -199,6 +201,7 @@ class TrustGameEnvironment(Environment):
             self.trust_streaks[i] = 0
             self.repeated_liar_counts[i] = 0
             self.trust_denials[i] = 0
+            self.correct_verifications[i] = 0
 
         self._assign_roles()
         self.oversight_flags = []
@@ -268,7 +271,10 @@ class TrustGameEnvironment(Environment):
 
             all_claims_submitted = len(self.claims) == self.num_agents
             negotiation_complete = all_claims_submitted and action.accept_proposal
-            if negotiation_complete:
+            timeout_complete = all_claims_submitted and (
+                self.step_count // self.num_agents >= self.max_rounds
+            )
+            if negotiation_complete or timeout_complete:
                 self._allocate_resources()
 
             # Reward depends on the (now-updated) oversight flags and allocation.
@@ -317,10 +323,14 @@ class TrustGameEnvironment(Environment):
                 + 0.5 * r_theory_of_mind
                 + self._base_outcome_reward(agent_id)
                 + 5.0 * self._correct_liar_identification_bonus(agent_id)
+                + self._verification_detection_bonus(agent_id)
             )
         if role == AgentRole.VICTIM:
-            return 0.8 * r_trust + self._base_outcome_reward(agent_id) - self._victim_deception_penalty(
-                agent_id
+            return (
+                0.8 * r_trust
+                + self._base_outcome_reward(agent_id)
+                - self._victim_deception_penalty(agent_id)
+                + self._verification_detection_bonus(agent_id)
             )
         if role == AgentRole.SELF_INTERESTED:
             r_stealth = self._stealth_reward(agent_id)
@@ -388,6 +398,9 @@ class TrustGameEnvironment(Environment):
             if self._compute_reliability(other_id) < reliability_threshold:
                 suspicious_count += 1
         return 1.0 if suspicious_count > 0 else 0.0
+
+    def _verification_detection_bonus(self, agent_id: int) -> float:
+        return min(3.0, 0.75 * self.correct_verifications.get(agent_id, 0))
 
     def _long_term_trust_bonus(self, agent_id: int) -> float:
         trust_by_others = [
@@ -532,7 +545,8 @@ class TrustGameEnvironment(Environment):
                 correct_detections += 1
             else:
                 false_positives += 1
-        return correct_detections * 0.15 - false_positives * 0.10
+        verification_bonus = 0.25 * self.correct_verifications.get(agent_id, 0)
+        return correct_detections * 0.25 + verification_bonus - false_positives * 0.10
 
     def _oversight_evaluation(self, agent_id: int):
         for target_id, claim in self.claims.items():
@@ -543,7 +557,7 @@ class TrustGameEnvironment(Environment):
             deviation = abs(claim - avg_claim)
             suspicion = float(self.suspicion_scores[agent_id, target_id])
             claim_gap = abs(claim - self.true_needs[target_id])
-            if deviation <= 15 and suspicion < 0.35 and claim_gap < 20:
+            if deviation <= 15 and suspicion < 0.30 and claim_gap < 18:
                 continue
 
             is_actually_lying = claim_gap >= 10
@@ -571,6 +585,15 @@ class TrustGameEnvironment(Environment):
         for target in targets:
             if 0 <= target < self.num_agents:
                 self.trust_matrix[agent_id, target] = self._compute_reliability(target)
+                claim_gap = abs(
+                    self.claims.get(target, self.true_needs[target]) - self.true_needs[target]
+                )
+                if claim_gap >= 10:
+                    self.correct_verifications[agent_id] = (
+                        self.correct_verifications.get(agent_id, 0) + 1
+                    )
+                    if target not in self.agent_memory[agent_id]["past_lies_detected"]:
+                        self.agent_memory[agent_id]["past_lies_detected"].append(target)
                 trusted_agents = self.agent_memory[agent_id]["trusted_agents"]
                 if self.trust_matrix[agent_id, target] >= 0.65 and target not in trusted_agents:
                     trusted_agents.append(target)

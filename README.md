@@ -183,9 +183,11 @@ A Colab-friendly notebook is included at:
 What it does:
 
 - Generates prompt/action supervision data from scripted role policies
+- Oversamples oversight examples so detection/verification behavior is learnable
+- Adds explicit `accept_proposal=true` completion examples after all claims are submitted
 - Fine-tunes a compact instruct model with **Unsloth** + **TRL SFTTrainer**
-- Evaluates before/after behavior in the Trust Game environment
-- Saves a reward comparison plot to `eval_results/training_reward_comparison.png`
+- Evaluates random, heuristic, and trained policies across Easy/Medium/Hard curriculum tasks
+- Saves curriculum reward plots to `eval_results/advanced_training/`
 
 Suggested quick workflow:
 
@@ -193,6 +195,23 @@ Suggested quick workflow:
 2. Run all cells to train and evaluate
 3. Commit generated artifacts (`eval_results/*.png`, optional metrics CSV/JSON)
 4. Link results directly in this README
+
+Recommended final-result framing:
+
+| Difficulty | Expected comparison |
+| ---------- | ------------------- |
+| Easy | Trained policy should beat random and heuristic on reward/fairness |
+| Medium | Trained policy should beat random and heuristic while keeping deception lower |
+| Hard | Trained policy should beat random and heuristic while improving detection/fairness |
+
+Rewards can be negative because they are penalties plus sparse bonuses. Report relative improvement instead of only absolute score, for example: "trained reduces penalty by 55% vs random and 18-26% vs heuristic."
+
+Before spending more HF credits on final training:
+
+- Push the latest environment so timeout auto-allocation and curriculum task metadata are live.
+- Run a small dataset/eval smoke test.
+- Confirm `accept_proposal_true_rows` and `oversampled_oversight_rows` are nonzero in `dataset_summary.json`.
+- Confirm fairness and detection metrics move off zero before the final paid run.
 
 ## Submission Links
 
