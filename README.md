@@ -17,8 +17,7 @@ tags:
 
 # Trust Game Environment
 
-A multi-agent negotiation environment for studying **trust, deception, and
-oversight** in AI agents. Built on top of [OpenEnv](https://github.com/meta-pytorch/OpenEnv).
+A high-stakes multi-agent negotiation benchmark where LLM agents can **lie, verify, manipulate, and build trust over time**—designed to show whether training actually reduces deception under pressure. Built on top of [OpenEnv](https://github.com/meta-pytorch/OpenEnv).
 
 Hugging Face Space: [hardikshreyas/trust_game_env](https://huggingface.co/spaces/hardikshreyas/trust_game_env)
 

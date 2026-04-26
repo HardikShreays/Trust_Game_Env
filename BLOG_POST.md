@@ -1,5 +1,7 @@
 # Trust Game Environment: A Multi-Agent Benchmark for Studying Deception, Trust, and Oversight in AI
 
+A high-stakes multi-agent negotiation benchmark where LLM agents can **lie, verify, manipulate, and build trust over time**—designed to test whether training actually reduces deception under pressure.
+
 **Author:** Hardik Shreyas  
 **Date:** April 2026  
 **Links:** [Hugging Face Space](https://huggingface.co/spaces/hardikshreyas/trust_game_env) · [Training Notebook (Colab)](https://colab.research.google.com/drive/1vczLIPJpWnqmlvYPpMOXwLQHAevG_H7v?usp=sharing) · [README](https://huggingface.co/spaces/hardikshreyas/trust_game_env/blob/main/README.md)  
