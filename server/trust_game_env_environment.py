@@ -635,7 +635,14 @@ class TrustGameEnvironment(Environment):
         return {i: c * scale_factor for i, c in effective_claims.items()}
 
     def _provisional_allocations(self) -> Dict[int, float]:
-        if len(self.claims) < self.num_agents:
+        """Best-effort allocation from current claims.
+
+        Works even when only a subset of agents has claimed yet; missing
+        agents are treated as zero-claim so fairness/efficiency remain
+        defined throughout an episode rather than locking to 0.0 until
+        full quorum and explicit acceptance.
+        """
+        if not self.claims:
             return {}
         return self._allocation_from_claims(self.claims)
 
@@ -656,6 +663,15 @@ class TrustGameEnvironment(Environment):
 
     def _get_observation(self, agent_id: int) -> TrustGameObservation:
         system_metrics = self._system_metrics()
+        finalized_allocation = self.allocations if any(v > 0 for v in self.allocations.values()) else None
+        # Always expose a (provisional) allocation once any agent has claimed
+        # so downstream evaluation never reads a None/empty allocation when
+        # an episode times out or is cut by a client-side step cap.
+        visible_allocation = finalized_allocation
+        if visible_allocation is None:
+            provisional = self._provisional_allocations()
+            if provisional:
+                visible_allocation = provisional
         return TrustGameObservation(
             round_number=self.round_num,
             your_agent_id=agent_id,
@@ -665,8 +681,8 @@ class TrustGameEnvironment(Environment):
             trust_scores={i: float(self.trust_matrix[agent_id, i]) for i in range(self.num_agents)},
             claim_history=self.claim_history,
             oversight_flags=self.oversight_flags,
-            allocation=self.allocations if any(v > 0 for v in self.allocations.values()) else None,
-            negotiation_complete=any(v > 0 for v in self.allocations.values()),
+            allocation=visible_allocation,
+            negotiation_complete=finalized_allocation is not None,
             system_metrics=system_metrics,
             prompt=self._generate_prompt(agent_id),
         )
@@ -688,7 +704,13 @@ class TrustGameEnvironment(Environment):
 
         fairness = 0.0
         efficiency = 0.0
-        allocation_for_metrics = self.allocations or self._provisional_allocations()
+        # `self.allocations` is pre-seeded to {i: 0.0}, so we must check
+        # for an actual non-zero finalized allocation before preferring it
+        # over a provisional allocation derived from current claims.
+        if any(v > 0 for v in self.allocations.values()):
+            allocation_for_metrics = self.allocations
+        else:
+            allocation_for_metrics = self._provisional_allocations()
         if allocation_for_metrics:
             total_alloc = sum(allocation_for_metrics.values())
             efficiency = total_alloc / max(1.0, self.resource_pool)
