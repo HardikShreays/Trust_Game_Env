@@ -401,7 +401,7 @@ If you use this environment in your research, please cite:
 ```bibtex
 @software{trust_game_env_2026,
   title  = {Trust Game Environment: A Multi-Agent Benchmark for Deception and Oversight},
-  author = {Shreyas, Hardik and Qamar, Syed Darain},
+  author = {Shreyas, Hardik},
   year   = {2026},
   url    = {https://huggingface.co/spaces/hardikshreyas/trust_game_env}
 }
