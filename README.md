@@ -244,6 +244,7 @@ Rewards can be negative because they are penalties plus sparse bonuses. Relative
 - Blog post: [https://huggingface.co/spaces/hardikshreyas/trust_game_env/blob/main/BLOG_POST.md](https://huggingface.co/spaces/hardikshreyas/trust_game_env/blob/main/BLOG_POST.md)
 - Evaluation summaries: `eval_results/results_summary.json`, `eval_results/results_raw.csv`
 - Curriculum plots: `eval_results/advanced_reward_by_curriculum.png`, `eval_results/advanced_mean_reward_by_curriculum.png`
+- Additional judge plots: `eval_results/advanced_training_loss_curve.png`, `eval_results/advanced_before_after_by_difficulty.png`
 - Optional external materials (add at least one before submission):
   - Video (<2 min): `<add-youtube-link>`
   - HF mini-blog / post: `<add-link>`
@@ -258,18 +259,6 @@ If you only have a few minutes:
 3. Check `Key plots` and evaluation summaries
 4. Open the training notebook link and inspect the judge-pack outputs
 
-## Submission checklist (judge-facing)
-
-- [x] OpenEnv environment implemented and validated (`openenv validate`)
-- [x] Environment deployed on HF Space: [hardikshreyas/trust_game_env](https://huggingface.co/spaces/hardikshreyas/trust_game_env)
-- [x] TRL + Unsloth training notebook included and Colab-linked
-- [x] Real training/eval artifacts committed (`eval_results/*.png`, `eval_results/*.json`, `eval_results/*.csv`)
-- [x] Add one external writeup link in README:
-  - [x] HF mini-blog / post: [BLOG_POST.md](https://huggingface.co/spaces/hardikshreyas/trust_game_env/blob/main/BLOG_POST.md)
-- [x] README includes problem framing, env design, and quantitative results
-
-Submission note: do not upload large video files to the repo/HF env. Keep videos external and link by URL in this README.
-
 ## Key plots
 
 ![Curriculum reward by episode](eval_results/advanced_reward_by_curriculum.png)
@@ -280,35 +269,13 @@ Caption: Episode-level rewards for random, heuristic, and trained policies acros
 
 Caption: Mean reward comparison per policy and difficulty; trained policy should dominate random/heuristic if learning succeeds.
 
-## Phase 2 evaluation (latest)
+![Training loss curve](eval_results/advanced_training_loss_curve.png)
 
-Artifacts from the latest ablation run are in `eval_results/phase2_eval/`:
+Caption: Real training run loss over steps (TRL + Unsloth), showing optimization progress.
 
-- Raw metrics CSV: `eval_results/phase2_eval/results_raw.csv`
-- Condition summary JSON: `eval_results/phase2_eval/results_summary.json`
-- Reward ablation plot: `eval_results/phase2_eval/ablation_reward_mean.png`
-- Core metrics plot: `eval_results/phase2_eval/ablation_core_metrics.png`
+![Before vs after by difficulty](eval_results/advanced_before_after_by_difficulty.png)
 
-What these results currently show:
-
-- The environment runs stably across ablation conditions (`n=24` seeds each).
-- `no_trust_updates` diverges from `full` on reward/trust, indicating trust-channel sensitivity.
-- Several conditions (`full`, `no_oversight`, `no_deception_reward`, `no_belief_updates`) currently collapse to nearly identical aggregates.
-
-Current caveats (important for judges):
-
-- Trained detection remains weak (`mean_detection_rate` is `0.0` on Easy/Hard and `0.125` on Medium), so explicit oversight detection is still a next-step improvement.
-- `mean_steps` is still `32.0` across policies/difficulties, which indicates many episodes are running to the client step cap instead of converging early.
-- `no_deception_reward` and `no_belief_updates` are expected to look similar under scripted baseline policies because those policies are not optimized by reward and only weakly depend on belief-state dynamics.
-- `full` vs `no_oversight` parity suggests the current flagging thresholds/policy interactions are too weak; this is a known gap to improve next.
-
-## Problem statement
-
-Most multi-agent benchmarks optimize behavior under shared information, but real deployments involve hidden incentives, strategic misreporting, and uneven visibility. My core problem is to model how deception emerges and spreads in a resource-allocation setting where some agents manipulate claims while others must infer who is deceptive from partial signals across repeated rounds.
-
-## How I solve it
-
-I solve this by building a role-driven Trust Game environment with asymmetric information, oversight, and longitudinal trust dynamics. Agents negotiate through claims, verification, and messages; the environment tracks trust shifts, belief updates, suspicion signals, and deception outcomes over time. I further strengthen realism with persistent agent memory, suspicion scoring, stricter deception-effectiveness checks, trust-network stability, information diffusion and betrayal-recognition metrics, plus message inconsistency tracking.
+Caption: Side-by-side comparison of heuristic baseline (before) vs trained policy (after) across Easy/Medium/Hard for reward and deception.
 
 ## Project structure
 
