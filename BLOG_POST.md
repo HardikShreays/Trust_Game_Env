@@ -9,6 +9,20 @@ A high-stakes multi-agent negotiation benchmark where LLM agents can **lie, veri
 
 ---
 
+## The Problem
+
+LLMs today cannot reliably cooperate in multi-round strategic settings: they often fail to model opponent beliefs, overfit short-term gain, and can exploit trust signals instead of sustaining reciprocity.
+
+## What This Environment Tests
+
+- Can agents learn reciprocity from sparse rewards?
+- Will they develop theory-of-mind about opponent strategies?
+- Can they recover from early betrayals?
+
+Why this matters for AI safety/alignment: in real multi-agent pipelines, one model's output can influence or manipulate another model's policy. This benchmark makes that failure mode measurable and trainable.
+
+---
+
 ## 1. Motivation: Why Study Deception in Multi-Agent Systems?
 
 Most existing multi-agent benchmarks evaluate cooperation, coordination, or competition under **shared information regimes**. Agents typically know each other's goals or operate with full visibility into the game state. However, real-world deployments of AI systems involve fundamentally different dynamics:
@@ -211,6 +225,22 @@ The notebook uses Unsloth's 4-bit quantized LoRA to fine-tune a small instruct m
 ## 7. Evaluation Results
 
 We evaluate three policy types — **random**, **heuristic** (scripted baselines), and **trained** (SFT fine-tuned) — across all three curriculum stages.
+
+### 7.0 Results at a Glance
+
+- **Reward curve over training/evaluation steps**
+
+![Reward curve over curriculum episodes](eval_results/advanced_reward_by_curriculum.png)
+
+- **Baseline comparison (random vs trained)**
+
+![Before vs after by difficulty](eval_results/advanced_before_after_by_difficulty.png)
+
+- **Behavioral change evidence**
+
+![Mean reward by curriculum difficulty](eval_results/advanced_mean_reward_by_curriculum.png)
+
+Average investment amounts (claim amount proxy), trust rates (`trust_stability`), and trustworthiness rates (`deception_rate` inverse proxy) are tracked in `eval_results/advanced_eval_summary.json` and transcript artifacts.
 
 ### 7.1 Mean Reward by Difficulty
 

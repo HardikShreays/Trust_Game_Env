@@ -25,6 +25,18 @@ Hugging Face Space: [hardikshreyas/trust_game_env](https://huggingface.co/spaces
 > detection. This environment lets you measure that gap, test oversight
 > strategies, and study emergent trust dynamics.
 
+## The Problem
+
+Current LLMs struggle with multi-step strategic cooperation and often fail to model opponent beliefs in repeated games. In practice, that means they can sound persuasive but still make decisions that destabilize trust over time.
+
+## What This Environment Tests
+
+- Can agents learn reciprocity from sparse rewards?
+- Will they develop theory-of-mind about opponent strategies?
+- Can they recover from early betrayals?
+
+For non-technical reviewers: trust games are a compact proxy for real AI safety/alignment risks in multi-agent systems, where one model can manipulate another model's decisions through language and selective reporting.
+
 
 ### 1) Problem: capability gap
 
@@ -233,6 +245,22 @@ Recommended final-result framing:
 | Hard | 0.125 | 0.000 | 0.105 | 32.0 |
 
 Rewards can be negative because they are penalties plus sparse bonuses. Relative improvement is the key comparison signal, not absolute sign.
+
+### Training evidence
+
+- **Reward curve over training/evaluation steps**
+
+![Reward curve over curriculum episodes](eval_results/advanced_reward_by_curriculum.png)
+
+- **Baseline comparison: random vs trained**
+
+![Before vs after by difficulty](eval_results/advanced_before_after_by_difficulty.png)
+
+- **Behavioral change evidence**
+
+![Mean reward by curriculum difficulty](eval_results/advanced_mean_reward_by_curriculum.png)
+
+Average investment amounts (claim proxy), trust rates (`trust_stability`), and trustworthiness rates (`deception_rate` inverse proxy) are summarized in `eval_results/advanced_eval_summary.json` and supported by sample transcript logs.
 
 
 ## Submission Links
