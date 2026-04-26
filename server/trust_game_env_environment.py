@@ -151,6 +151,18 @@ class TrustGameEnvironment(Environment):
     def _get_curriculum_task(self) -> Dict[str, object]:
         return dict(self.CURRICULUM_TASKS.get(self.curriculum_stage, self.CURRICULUM_TASKS[2]))
 
+    def _episode_ready(self) -> bool:
+        """Return True when episode state is fully initialized."""
+        if not self.episode_id:
+            return False
+        if not isinstance(self.trust_matrix, np.ndarray):
+            return False
+        if self.trust_matrix.shape != (self.num_agents, self.num_agents):
+            return False
+        if not self.claim_history:
+            return False
+        return True
+
     def reset(self) -> TrustGameObservation:
         self.episode_id = str(uuid4())
         self.step_count = 0
@@ -672,13 +684,22 @@ class TrustGameEnvironment(Environment):
             provisional = self._provisional_allocations()
             if provisional:
                 visible_allocation = provisional
+        if (
+            isinstance(self.trust_matrix, np.ndarray)
+            and self.trust_matrix.shape == (self.num_agents, self.num_agents)
+        ):
+            trust_scores = {
+                i: float(self.trust_matrix[agent_id, i]) for i in range(self.num_agents)
+            }
+        else:
+            trust_scores = {i: 0.5 for i in range(self.num_agents)}
         return TrustGameObservation(
             round_number=self.round_num,
             your_agent_id=agent_id,
             your_role=self.roles[agent_id],
             your_true_need=self.true_needs[agent_id],
             all_claims=self.claims,
-            trust_scores={i: float(self.trust_matrix[agent_id, i]) for i in range(self.num_agents)},
+            trust_scores=trust_scores,
             claim_history=self.claim_history,
             oversight_flags=self.oversight_flags,
             allocation=visible_allocation,
@@ -688,15 +709,26 @@ class TrustGameEnvironment(Environment):
         )
 
     def _system_metrics(self) -> Dict[str, float]:
-        trust_values = [
-            float(self.trust_matrix[i, j])
-            for i in range(self.num_agents)
-            for j in range(self.num_agents)
-            if i != j
-        ]
+        if (
+            isinstance(self.trust_matrix, np.ndarray)
+            and self.trust_matrix.shape == (self.num_agents, self.num_agents)
+        ):
+            trust_values = [
+                float(self.trust_matrix[i, j])
+                for i in range(self.num_agents)
+                for j in range(self.num_agents)
+                if i != j
+            ]
+        else:
+            trust_values = []
         trust_stability = float(np.mean(trust_values)) if trust_values else 0.0
         trust_network_stability = 0.0
-        if self.previous_trust_matrix is not None and self.trust_matrix is not None:
+        if (
+            isinstance(self.previous_trust_matrix, np.ndarray)
+            and isinstance(self.trust_matrix, np.ndarray)
+            and self.previous_trust_matrix.shape == (self.num_agents, self.num_agents)
+            and self.trust_matrix.shape == (self.num_agents, self.num_agents)
+        ):
             trust_network_stability = max(
                 0.0,
                 1.0 - float(np.mean(np.abs(self.trust_matrix - self.previous_trust_matrix))),
@@ -1037,6 +1069,10 @@ class TrustGameEnvironment(Environment):
 
     @property
     def state(self) -> EpisodeState:
+        # `/state` may be called before `/reset` (or with a fresh session id).
+        # Auto-reset to provide a stable, non-500 response.
+        if not self._episode_ready():
+            self.reset()
         return EpisodeState(
             episode_id=self.episode_id,
             step_count=self.step_count,
