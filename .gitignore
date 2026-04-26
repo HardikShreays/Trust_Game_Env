@@ -43,7 +43,4 @@ pip-wheel-metadata/
 **/checkpoints/
 **/wandb/
 **/runs/
-**/eval_results/*.png
-**/eval_results/*.jpg
-**/eval_results/*.jpeg
 

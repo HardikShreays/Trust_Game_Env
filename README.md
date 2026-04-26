@@ -26,7 +26,28 @@ Hugging Face Space: [hardikshreyas/trust_game_env](https://huggingface.co/spaces
 > detection. This environment lets you measure that gap, test oversight
 > strategies, and study emergent trust dynamics.
 
-## What's inside
+
+### 1) Problem: capability gap
+
+LLM agents can be persuasive before they are reliably honest. In real multi-agent settings, agents can misreport needs, manipulate trust, and exploit weak oversight. This project targets that gap directly: **can training reduce deceptive behavior while preserving cooperative outcomes?**
+
+### 2) Environment: what the agent sees, does, and is rewarded for
+
+- Agents see private role/need context plus public claims and trust history.
+- Agents act by claiming resources, optionally verifying others, and deciding whether to accept a proposal.
+- Rewards combine role-specific sparse signals (e.g., fair share, deception success/failure, detection precision) with shaping terms (trust calibration, consistency, belief alignment).
+
+### 3) Results: what changed after training
+
+- A shared policy is evaluated against `random` and `heuristic` baselines across Easy/Medium/Hard curriculum tasks.
+- The trained policy improves total reward relative to baselines and reduces deception in harder settings.
+- Full artifacts are linked in this README (`eval_results/*.csv`, `eval_results/*.json`, `eval_results/*.png`) so judges can verify outcomes directly.
+
+### 4) Why it matters
+
+This environment is useful for AI safety and multi-agent alignment research: it exposes when models optimize for social manipulation instead of truthful coordination, and gives a measurable training/evaluation loop to improve that behavior.
+
+## Environment details
 
 Agents negotiate over a shared resource pool. Each agent is assigned one of
 four roles (hidden from others):
@@ -177,8 +198,8 @@ See `openenv.yaml` and `server/Dockerfile`.
 
 A Colab-friendly notebook is included at:
 
-- `training/train_trl_unsloth.ipynb`
-- Colab link: [Trust Game TRL + Unsloth training notebook](https://colab.research.google.com/drive/18fPoihsVVGsTzCNPPFZGL490O6XC2dTe?usp=sharing)
+- `training/advanced_train_trl_unsloth_hf_space.ipynb`
+- Colab link: [Advanced Trust Game TRL + Unsloth training notebook](https://colab.research.google.com/drive/1vczLIPJpWnqmlvYPpMOXwLQHAevG_H7v?usp=sharing)
 
 What it does:
 
@@ -191,29 +212,51 @@ What it does:
 
 Suggested quick workflow:
 
-1. Open `training/train_trl_unsloth.ipynb` in Colab or Jupyter
+1. Open `training/advanced_train_trl_unsloth_hf_space.ipynb` in Colab or Jupyter
 2. Run all cells to train and evaluate
 3. Commit generated artifacts (`eval_results/*.png`, plus metrics CSV/JSON)
 4. Embed key plots in this README with one-line captions
 
+## Results at a glance
+
 Recommended final-result framing:
 
-| Difficulty | Current comparison summary |
-| ---------- | -------------------------- |
-| Easy | Trained policy beats random and heuristic on total reward |
-| Medium | Trained policy beats random and heuristic on total reward |
-| Hard | Trained policy beats random and heuristic on total reward and lowers deception |
+| Difficulty | Random reward | Heuristic reward | Trained reward | Reward lift vs random |
+| ---------- | ------------- | ---------------- | -------------- | --------------------- |
+| Easy | -542.656 | -306.048 | -273.049 | 49.7% |
+| Medium | -607.088 | -329.343 | -260.305 | 57.1% |
+| Hard | -534.957 | -312.417 | -266.043 | 50.3% |
 
-Rewards can be negative because they are penalties plus sparse bonuses. Report relative improvement instead of only absolute score, for example: "trained reduces penalty by 55% vs random and 18-26% vs heuristic."
+| Difficulty | Trained deception rate | Trained detection rate | Trained fairness | Mean steps |
+| ---------- | ---------------------- | ---------------------- | ---------------- | ---------- |
+| Easy | 0.250 | 0.000 | 0.098 | 32.0 |
+| Medium | 0.500 | 0.125 | 0.105 | 32.0 |
+| Hard | 0.125 | 0.000 | 0.105 | 32.0 |
+
+Rewards can be negative because they are penalties plus sparse bonuses. Relative improvement is the key comparison signal, not absolute sign.
 
 
 ## Submission Links
 
 - Environment URL: [https://huggingface.co/spaces/hardikshreyas/trust_game_env](https://huggingface.co/spaces/hardikshreyas/trust_game_env)
-- Training notebook: `training/train_trl_unsloth.ipynb`
-- Training notebook (Colab): [https://colab.research.google.com/drive/18fPoihsVVGsTzCNPPFZGL490O6XC2dTe?usp=sharing](https://colab.research.google.com/drive/18fPoihsVVGsTzCNPPFZGL490O6XC2dTe?usp=sharing)
+- Training notebook: `training/advanced_train_trl_unsloth_hf_space.ipynb`
+- Training notebook (Colab): [https://colab.research.google.com/drive/1vczLIPJpWnqmlvYPpMOXwLQHAevG_H7v?usp=sharing](https://colab.research.google.com/drive/1vczLIPJpWnqmlvYPpMOXwLQHAevG_H7v?usp=sharing)
+- Blog post: [https://huggingface.co/spaces/hardikshreyas/trust_game_env/blob/main/BLOG_POST.md](https://huggingface.co/spaces/hardikshreyas/trust_game_env/blob/main/BLOG_POST.md)
 - Evaluation summaries: `eval_results/results_summary.json`, `eval_results/results_raw.csv`
 - Curriculum plots: `eval_results/advanced_reward_by_curriculum.png`, `eval_results/advanced_mean_reward_by_curriculum.png`
+- Optional external materials (add at least one before submission):
+  - Video (<2 min): `<add-youtube-link>`
+  - HF mini-blog / post: `<add-link>`
+  - Slide deck: `<add-link>`
+
+## Reviewer path (3-5 minutes)
+
+If you only have a few minutes:
+
+1. Open the Space: [hardikshreyas/trust_game_env](https://huggingface.co/spaces/hardikshreyas/trust_game_env)
+2. Read `Story in 60 seconds` and `Curriculum`
+3. Check `Key plots` and evaluation summaries
+4. Open the training notebook link and inspect the judge-pack outputs
 
 ## Submission checklist (judge-facing)
 
@@ -221,10 +264,8 @@ Rewards can be negative because they are penalties plus sparse bonuses. Report r
 - [x] Environment deployed on HF Space: [hardikshreyas/trust_game_env](https://huggingface.co/spaces/hardikshreyas/trust_game_env)
 - [x] TRL + Unsloth training notebook included and Colab-linked
 - [x] Real training/eval artifacts committed (`eval_results/*.png`, `eval_results/*.json`, `eval_results/*.csv`)
-- [ ] Add one external writeup link in README (choose one):
-  - [ ] YouTube video (<2 min): `<add-youtube-link>`
-  - [ ] HF mini-blog / post: `<add-link>`
-  - [ ] Slide deck: `<add-link>`
+- [x] Add one external writeup link in README:
+  - [x] HF mini-blog / post: [BLOG_POST.md](https://huggingface.co/spaces/hardikshreyas/trust_game_env/blob/main/BLOG_POST.md)
 - [x] README includes problem framing, env design, and quantitative results
 
 Submission note: do not upload large video files to the repo/HF env. Keep videos external and link by URL in this README.
@@ -256,7 +297,8 @@ What these results currently show:
 
 Current caveats (important for judges):
 
-- Oversight detection metrics are still `0.0` (`precision/recall/F1`), so the claim "oversight detects deception" is not yet empirically demonstrated by this run.
+- Trained detection remains weak (`mean_detection_rate` is `0.0` on Easy/Hard and `0.125` on Medium), so explicit oversight detection is still a next-step improvement.
+- `mean_steps` is still `32.0` across policies/difficulties, which indicates many episodes are running to the client step cap instead of converging early.
 - `no_deception_reward` and `no_belief_updates` are expected to look similar under scripted baseline policies because those policies are not optimized by reward and only weakly depend on belief-state dynamics.
 - `full` vs `no_oversight` parity suggests the current flagging thresholds/policy interactions are too weak; this is a known gap to improve next.
 

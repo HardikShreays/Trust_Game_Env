@@ -2,7 +2,7 @@
 
 **Author:** Hardik Shreyas  
 **Date:** April 2026  
-**Links:** [Hugging Face Space](https://huggingface.co/spaces/hardikshreyas/trust_game_env) · [Training Notebook (Colab)](https://colab.research.google.com/drive/18fPoihsVVGsTzCNPPFZGL490O6XC2dTe?usp=sharing)  
+**Links:** [Hugging Face Space](https://huggingface.co/spaces/hardikshreyas/trust_game_env) · [Training Notebook (Colab)](https://colab.research.google.com/drive/1vczLIPJpWnqmlvYPpMOXwLQHAevG_H7v?usp=sharing) · [README](https://huggingface.co/spaces/hardikshreyas/trust_game_env/blob/main/README.md)  
 **Tags:** `multi-agent` · `ai-safety` · `trust` · `deception` · `openenv` · `reinforcement-learning`
 
 ---
@@ -186,7 +186,7 @@ These metrics enable researchers to construct **deception-vs-detection curves**,
 
 ## 6. Training with TRL and Unsloth
 
-We provide a Colab-ready training notebook (`training/train_trl_unsloth.ipynb`) that demonstrates how to fine-tune a compact instruct model on this environment using [TRL](https://github.com/huggingface/trl) (Transformer Reinforcement Learning) and [Unsloth](https://github.com/unslothai/unsloth) for efficient training.
+We provide a Colab-ready training notebook (`training/advanced_train_trl_unsloth_hf_space.ipynb`) that demonstrates how to fine-tune a compact instruct model on this environment using [TRL](https://github.com/huggingface/trl) (Transformer Reinforcement Learning) and [Unsloth](https://github.com/unslothai/unsloth) for efficient training.
 
 ### 6.1 Data Generation
 
@@ -214,23 +214,33 @@ We evaluate three policy types — **random**, **heuristic** (scripted baselines
 
 | Difficulty | Random | Heuristic | Trained | Trained vs. Random | Trained vs. Heuristic |
 |---|---|---|---|---|---|
-| Easy | −578.5 | −316.2 | −255.6 | **55.8% improvement** | **19.2% improvement** |
-| Medium | −544.8 | −343.7 | −272.3 | **50.0% improvement** | **20.8% improvement** |
-| Hard | −535.7 | −321.7 | −271.1 | **49.4% improvement** | **15.7% improvement** |
+| Easy | −542.656 | −306.048 | −273.049 | **49.7% improvement** | **10.8% improvement** |
+| Medium | −607.088 | −329.343 | −260.305 | **57.1% improvement** | **21.0% improvement** |
+| Hard | −534.957 | −312.417 | −266.043 | **50.3% improvement** | **14.8% improvement** |
 
-The trained policy consistently outperforms both baselines across all difficulty levels. Improvement is most pronounced on Easy tasks (55.8% over random) but remains substantial even on Hard tasks where adversarial agents with message manipulation are present.
+The trained policy consistently outperforms both baselines across all difficulty levels. The relative reward lift vs random is approximately 50-57% across the curriculum.
 
 ### 7.2 Deception Rate by Difficulty
 
 | Difficulty | Random | Heuristic | Trained |
 |---|---|---|---|
-| Easy | 0.625 | 0.750 | 0.625 |
-| Medium | 0.625 | 0.500 | **0.375** |
-| Hard | 0.750 | 0.375 | **0.125** |
+| Easy | 0.750 | 0.625 | **0.250** |
+| Medium | 0.750 | 0.500 | 0.500 |
+| Hard | 0.625 | 0.625 | **0.125** |
 
-The trained policy achieves the lowest deception rate on Hard tasks (0.125 vs. 0.375 for heuristic and 0.750 for random), suggesting that fine-tuned agents learn more truthful claiming strategies even in adversarial settings.
+The trained policy achieves the lowest deception rate on Easy and Hard tasks (especially Hard at 0.125), but Medium remains flat against the heuristic baseline.
 
-### 7.3 Ablation Study
+### 7.3 Detection, Fairness, and Episode Length
+
+| Difficulty | Trained detection rate | Trained fairness | Mean steps |
+|---|---|---|---|
+| Easy | 0.000 | 0.098 | 32.0 |
+| Medium | 0.125 | 0.105 | 32.0 |
+| Hard | 0.000 | 0.105 | 32.0 |
+
+Fairness is now consistently non-zero (~0.10), but `mean_steps=32.0` indicates many episodes still run to the client step cap. Detection remains weak and should be treated as an active improvement area rather than a solved capability.
+
+### 7.4 Ablation Study
 
 We run a five-condition ablation across 50 seeds each on the Hard curriculum stage:
 
@@ -246,12 +256,13 @@ Key findings:
 - **Trust updates matter.** The `no_trust_updates` condition diverges most clearly: trust stability drops to 0.500 (the initial value, since trust never evolves), and successful deceptions drop to zero (because trust-gated allocation no longer responds to reputation).
 - **Scripted baselines mask ablation sensitivity.** The similarity between `full`, `no_oversight`, and `no_deception_reward` under scripted policies is expected — these policies follow fixed rules and do not adapt to reward or oversight signals. The ablation becomes more informative with learned policies.
 
-### 7.4 Known Gaps and Honest Caveats
+### 7.5 Known Gaps and Honest Caveats
 
 We believe in transparent reporting. The current evaluation has several known limitations:
 
-- **Oversight detection metrics remain at 0.0** across all conditions. The oversight agent generates flags, but the detection precision/recall/F1 pipeline requires tighter threshold calibration and more diverse adversarial strategies to produce non-trivial detection performance.
-- **Fairness is sensitive to step budget.** The `max_rounds=5` default produces non-zero allocations, but longer episodes with more negotiation rounds would likely produce fairer outcomes.
+- **Oversight detection remains weak** in the latest run (`mean_detection_rate` is 0.0 on Easy/Hard and 0.125 on Medium), so explicit detection should still be framed as work in progress.
+- **Episodes still hit step cap.** `mean_steps=32.0` across difficulties suggests many trajectories run to the client-side max-step budget.
+- **Fairness improved from zero but remains low** (~0.10), so "fair allocation solved" would be an overclaim.
 - **The gap between full and no_oversight** is smaller than expected, indicating that the current oversight thresholds and policy interactions need further tuning for the oversight mechanism to demonstrably reduce deception.
 
 ---
